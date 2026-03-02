@@ -1,7 +1,7 @@
-from langchain_core.documents import Document
-from langchain_openai import OpenAIEmbeddings
 from langchain_community.embeddings import FakeEmbeddings
 from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+from langchain_openai import OpenAIEmbeddings
 
 from app.core.config import get_settings
 
@@ -16,13 +16,14 @@ class RetrievalService:
             Document(page_content="Order cancellations are available only before shipment."),
         ]
 
-        if settings.openai_api_key:
+        if settings.llm_api_key:
             embeddings = OpenAIEmbeddings(
-                api_key=settings.openai_api_key,
-                base_url=settings.openai_base_url,
+                api_key=settings.llm_api_key,
+                base_url=settings.llm_base_url,
             )
         else:
             embeddings = FakeEmbeddings(size=1536)
+
         self.vector_store = FAISS.from_documents(docs, embeddings)
 
     async def retrieve_context(self, query: str, k: int = 2) -> str:
