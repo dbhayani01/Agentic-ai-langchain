@@ -6,7 +6,7 @@ Production-minded reference app with **FastAPI + LangChain + React + PostgreSQL*
 - **Frontend (React + Vite + Tailwind)**: Chat UI with dark mode, optimistic rendering, and streaming text updates.
 - **Backend (FastAPI async)**: Async API, middleware logging, CORS, rate limiting, dependency injection.
 - **Agent Layer (LangChain)**:
-  - Intent + response orchestration via `create_openai_tools_agent`
+  - Intent + response orchestration via modern `create_agent` (LangChain v1 API)
   - Async custom tools (`order_status_checker`, `product_search`, `faq_retriever`)
   - RAG context injected from FAISS retrieval service
   - `ConversationBufferMemory` for conversational continuity

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.rate_limit import limiter
 from app.db.session import get_db_session
 from app.schemas.chat import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
@@ -15,16 +16,25 @@ def get_chat_service(db: AsyncSession = Depends(get_db_session)) -> ChatService:
 
 
 @router.post("", response_model=ChatResponse, summary="Send a chat message to support agent")
-async def chat(payload: ChatRequest, service: ChatService = Depends(get_chat_service)) -> ChatResponse:
+@limiter.limit("60/minute")
+async def chat(
+    request: Request, payload: ChatRequest, service: ChatService = Depends(get_chat_service)
+) -> ChatResponse:
+    del request
     try:
         response = await service.handle_chat(payload.session_id, payload.message)
         return ChatResponse(session_id=payload.session_id, response=response)
-    except Exception as exc:  # broad to map AI/provider errors into API-safe response
+    except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Chat processing failed: {exc}") from exc
 
 
 @router.post("/stream", summary="Stream support assistant response")
-async def chat_stream(payload: ChatRequest, service: ChatService = Depends(get_chat_service)) -> StreamingResponse:
+@limiter.limit("60/minute")
+async def chat_stream(
+    request: Request, payload: ChatRequest, service: ChatService = Depends(get_chat_service)
+) -> StreamingResponse:
+    del request
+
     async def event_stream():
         try:
             async for chunk in service.stream_chat(payload.session_id, payload.message):

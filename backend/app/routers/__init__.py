@@ -1,3 +1,3 @@
-from app.routers import chat, health
+from . import chat, health
 
 __all__ = ["chat", "health"]

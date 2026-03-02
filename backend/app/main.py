@@ -1,19 +1,19 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Request
+
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging
+from app.core.rate_limit import limiter
 from app.db.base import Base
 from app.db.session import engine
 from app.middleware.logging_middleware import LoggingMiddleware
 from app.routers import chat, health
 
 settings = get_settings()
-limiter = Limiter(key_func=get_remote_address, default_limits=[f"{settings.rate_limit_per_minute}/minute"])
 
 
 @asynccontextmanager
@@ -26,7 +26,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title=settings.app_name,
-    version="0.1.0",
+    version="0.1.1",
     lifespan=lifespan,
     openapi_tags=[
         {"name": "chat", "description": "AI support assistant endpoints."},
@@ -43,12 +43,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@app.middleware("http")
-async def add_rate_limit(request: Request, call_next):
-    return await limiter.limit(f"{settings.rate_limit_per_minute}/minute")(call_next)(request)
-
 
 app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(chat.router, prefix=settings.api_prefix)

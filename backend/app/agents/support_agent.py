@@ -1,6 +1,5 @@
-from langchain.agents import AgentExecutor, create_openai_tools_agent
-from langchain.memory import ConversationBufferMemory
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain.agents import create_agent
+from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.core.config import get_settings
@@ -18,20 +17,22 @@ class SupportAgentFactory:
             streaming=True,
         )
         self.tools = [order_status_checker, product_search, faq_retriever]
-        self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
-
-    def build(self) -> AgentExecutor:
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                (
-                    "system",
-                    "You are a concise and helpful e-commerce support assistant. "
-                    "Detect user intent, use tools when needed, and ground responses in provided context.",
-                ),
-                MessagesPlaceholder("chat_history"),
-                ("human", "RAG Context:\n{context}\n\nUser Question: {input}"),
-                MessagesPlaceholder("agent_scratchpad"),
-            ]
+        self.system_prompt = (
+            "You are a concise and helpful e-commerce support assistant. "
+            "Detect user intent, use tools when needed, and ground responses in provided context."
         )
-        agent = create_openai_tools_agent(self.llm, self.tools, prompt)
-        return AgentExecutor(agent=agent, tools=self.tools, memory=self.memory, verbose=False)
+
+    def build(self):
+        return create_agent(model=self.llm, tools=self.tools, system_prompt=self.system_prompt)
+
+    async def ainvoke(self, message: str, context: str, chat_history: list[BaseMessage]) -> str:
+        agent = self.build()
+        messages: list[BaseMessage] = [SystemMessage(content=self.system_prompt), *chat_history]
+        messages.append(HumanMessage(content=f"RAG Context:\n{context}\n\nUser Question: {message}"))
+
+        result = await agent.ainvoke({"messages": messages})
+        output_messages = result.get("messages", [])
+        for item in reversed(output_messages):
+            if isinstance(item, AIMessage):
+                return item.content if isinstance(item.content, str) else str(item.content)
+        return "Sorry, I couldn't generate a response."
