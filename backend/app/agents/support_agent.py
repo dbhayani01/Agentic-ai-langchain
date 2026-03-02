@@ -1,6 +1,4 @@
-from typing import Any
-
-from langchain.agents import create_openai_tools_agent
+from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
@@ -22,11 +20,7 @@ class SupportAgentFactory:
         self.tools = [order_status_checker, product_search, faq_retriever]
         self.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True)
 
-    def build(self) -> Any:
-        # AgentExecutor import paths vary across LangChain releases.
-        # Use late import from canonical module to avoid startup ImportError from package re-exports.
-        from langchain.agents.agent import AgentExecutor
-
+    def build(self) -> AgentExecutor:
         prompt = ChatPromptTemplate.from_messages(
             [
                 (
