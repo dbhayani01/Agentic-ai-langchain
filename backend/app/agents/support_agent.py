@@ -1,5 +1,4 @@
-from langchain.agents import create_openai_tools_agent
-from langchain.agents.agent import AgentExecutor
+from langchain.agents import AgentExecutor, create_openai_tools_agent
 from langchain.memory import ConversationBufferMemory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
