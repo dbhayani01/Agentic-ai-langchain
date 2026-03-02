@@ -1,5 +1,6 @@
 from functools import lru_cache
-from pydantic import Field
+
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,9 +17,16 @@ class Settings(BaseSettings):
 
     cors_origins: list[str] = ["http://localhost:5173"]
 
-    openai_api_key: str = ""
-    openai_base_url: str = "https://api.openai.com/v1"
-    openai_model: str = "gpt-4o-mini"
+    # OpenAI-compatible provider configuration (defaults tuned for Groq free/dev tier).
+    llm_api_key: str = Field(default="", validation_alias=AliasChoices("LLM_API_KEY", "OPENAI_API_KEY", "GROQ_API_KEY"))
+    llm_base_url: str = Field(
+        default="https://api.groq.com/openai/v1",
+        validation_alias=AliasChoices("LLM_BASE_URL", "OPENAI_BASE_URL", "GROQ_BASE_URL"),
+    )
+    llm_model: str = Field(
+        default="llama-3.1-8b-instant",
+        validation_alias=AliasChoices("LLM_MODEL", "OPENAI_MODEL", "GROQ_MODEL"),
+    )
 
     rate_limit_per_minute: int = 60
 

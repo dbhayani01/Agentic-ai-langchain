@@ -1,12 +1,13 @@
 # AI Customer Support Assistant (E-commerce)
 
-Production-minded reference app with **FastAPI + LangChain + React + PostgreSQL**.
+Production-minded reference app with **FastAPI + LangChain + React + PostgreSQL** (defaulted to Groq via OpenAI-compatible API).
 
 ## 1) High-level Architecture
 - **Frontend (React + Vite + Tailwind)**: Chat UI with dark mode, optimistic rendering, and streaming text updates.
 - **Backend (FastAPI async)**: Async API, middleware logging, CORS, rate limiting, dependency injection.
 - **Agent Layer (LangChain)**:
   - Intent + response orchestration via modern `create_agent` (LangChain v1 API)
+  - LLM provider abstraction through OpenAI-compatible interface (`LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY`) with Groq defaults
   - Async custom tools (`order_status_checker`, `product_search`, `faq_retriever`)
   - RAG context injected from FAISS retrieval service
   - `ConversationBufferMemory` for conversational continuity
@@ -19,6 +20,15 @@ Production-minded reference app with **FastAPI + LangChain + React + PostgreSQL*
 3. Agent prompt receives `chat_history`, `context`, and user `input`.
 4. Agent chooses whether to call tools.
 5. Final answer is returned and persisted in PostgreSQL.
+
+
+## Provider configuration (Groq by default)
+- This project uses `ChatOpenAI` with an **OpenAI-compatible endpoint**, so Groq works out of the box.
+- Defaults in `.env.example` target Groq free/dev usage:
+  - `LLM_BASE_URL=https://api.groq.com/openai/v1`
+  - `LLM_MODEL=llama-3.1-8b-instant`
+- Set your key in `LLM_API_KEY`.
+- Backward-compatible env aliases are also accepted: `OPENAI_*` and `GROQ_*`.
 
 ## 2) Folder Structure
 

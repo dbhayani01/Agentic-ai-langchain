@@ -10,9 +10,9 @@ class SupportAgentFactory:
     def __init__(self) -> None:
         settings = get_settings()
         self.llm = ChatOpenAI(
-            model=settings.openai_model,
-            api_key=settings.openai_api_key or "EMPTY",
-            base_url=settings.openai_base_url,
+            model=settings.llm_model,
+            api_key=settings.llm_api_key or "EMPTY",
+            base_url=settings.llm_base_url,
             temperature=0,
             streaming=True,
         )
