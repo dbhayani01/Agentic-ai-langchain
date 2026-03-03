@@ -15,6 +15,9 @@ class SupportAgentFactory:
             base_url=settings.llm_base_url,
             temperature=0,
             streaming=True,
+            # Groq's OpenAI-compatible API currently works best with chat-completions.
+            # Forcing this avoids Responses API payload differences (e.g. structured input blocks).
+            use_responses_api=False,
         )
         self.tools = [order_status_checker, product_search, faq_retriever]
         self.system_prompt = (
