@@ -1,3 +1,6 @@
+from importlib import import_module
+from importlib.util import find_spec
+
 from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
@@ -9,7 +12,26 @@ from app.tools.support_tools import faq_retriever, order_status_checker, product
 class SupportAgentFactory:
     def __init__(self) -> None:
         settings = get_settings()
-        self.llm = ChatOpenAI(
+        self.llm = self._build_llm(settings)
+        self.tools = [order_status_checker, product_search, faq_retriever]
+        self.system_prompt = (
+            "You are a concise and helpful e-commerce support assistant. "
+            "Detect user intent, use tools when needed, and ground responses in provided context."
+        )
+
+    def _build_llm(self, settings):
+        uses_groq = "api.groq.com" in settings.llm_base_url.lower()
+
+        if uses_groq and find_spec("langchain_groq"):
+            chat_groq_module = import_module("langchain_groq")
+            return chat_groq_module.ChatGroq(
+                model_name=settings.llm_model,
+                api_key=settings.llm_api_key or "EMPTY",
+                temperature=0,
+                streaming=True,
+            )
+
+        return ChatOpenAI(
             model=settings.llm_model,
             api_key=settings.llm_api_key or "EMPTY",
             base_url=settings.llm_base_url,
@@ -18,11 +40,6 @@ class SupportAgentFactory:
             # Groq's OpenAI-compatible API currently works best with chat-completions.
             # Forcing this avoids Responses API payload differences (e.g. structured input blocks).
             use_responses_api=False,
-        )
-        self.tools = [order_status_checker, product_search, faq_retriever]
-        self.system_prompt = (
-            "You are a concise and helpful e-commerce support assistant. "
-            "Detect user intent, use tools when needed, and ground responses in provided context."
         )
 
     def build(self):
